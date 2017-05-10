@@ -1,0 +1,4 @@
+requests
+pycurl
+tabulate
+bs4

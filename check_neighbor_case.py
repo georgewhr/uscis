@@ -60,6 +60,7 @@ def get_result(case_num):
 def main():
 	args = cmdArgumentParser()
 	case_numberic = int(args.case_num[3:])
+	prefix = args.case_num[:3]
 	final_result = []
 	# print '%d'%num
 
@@ -67,15 +68,14 @@ def main():
 	end = case_numberic + args.batch
 
 	for i in range(start,end):
-		case_n = 'WAC'+str(i)
+		case_n = prefix+str(i)
 		# print case_n
 		final_result.append(get_result(case_n))
 
 	print tabulate(sorted(final_result,key=lambda x: x[0]),headers=['Case Number', 'Status'])
-	
+
 	# print final_result
 	# print tabulate(sorted(final_result,key=lambda l:l[2]), headers=['Service', 'Version'])
-
 
 
 if __name__ == "__main__":
