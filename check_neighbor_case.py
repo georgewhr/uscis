@@ -41,7 +41,7 @@ def cmdArgumentParser():
 	args = parser.parse_args()
 	return parser.parse_args()
 
-def get_result(case_num,prefix):
+def get_result(case_num,prefix,verbose):
 	info = {}
 	result=''
 	buf = cStringIO.StringIO()
@@ -66,11 +66,14 @@ def get_result(case_num,prefix):
 		recv_date = details[0][3:] + ' ' + details[1][1:]
 		case_type = details[2].split(' ')[-1]
 		info = {
-		"Type": case_type,
-		"Received": recv_date,
-		"Number": case_num,
-		"Status": result[1]
+			"Type": case_type,
+			"Received": recv_date,
+			"Number": case_num,
+			"Status": result[1]
 		}
+		if verbose:
+			print info
+
 	except Exception as e:
 		print 'USCIS format is incorrect'
 
@@ -94,7 +97,7 @@ def query_website(ns,batch_result,prefix,lock,verbose):
 	if verbose:
 		print 's is %d, e is %d'%(int(batch_result['start']),int(batch_result['end']))
 	for case_n in range(int(batch_result['start']),int(batch_result['end'])):
-		local_result.append(get_result(case_n,prefix))
+		local_result.append(get_result(case_n,prefix,verbose))
 
 	lock.acquire()
 	ns.df = ns.df + local_result
@@ -135,7 +138,7 @@ def main():
 		# 	reminder_result.append(get_result(i,prefix))
 	else:
 		for i in range(start,end):
-			final_result.append(get_result(i,prefix))
+			final_result.append(get_result(i,prefix,args.verbose))
 
 	json_type = json.dumps(final_result,indent=4)
 	with open('data.yml', 'w') as outfile:
