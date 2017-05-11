@@ -65,14 +65,14 @@ def get_result(case_num,prefix):
 		details = result[2].split(',')
 		recv_date = details[0][3:] + ' ' + details[1][1:]
 		case_type = details[2].split(' ')[-1]
-	except Exception as e:
-		print 'USCIS format is incorrect'
-	info = {
+		info = {
 		"Type": case_type,
 		"Received": recv_date,
 		"Number": case_num,
 		"Status": result[1]
-	}
+		}
+	except Exception as e:
+		print 'USCIS format is incorrect'
 
 	return info
 
@@ -121,7 +121,7 @@ def main():
 
 	if total_num > 20:
 		batch_result = get_batch_pair(total_num,start,end)
-		
+
 		for i in range(len(batch_result)):
 			p = multiprocessing.Process(target=query_website,args=(ns,batch_result[i],prefix,lock,args.verbose,))
 			jobs.append(p)
