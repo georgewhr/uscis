@@ -82,8 +82,9 @@ def main():
 		final_result.append(get_result(case_n))
 
 	json_type = json.dumps(final_result,indent=4)
-	print yaml.dump(yaml.load(json_type), allow_unicode=True)
-
+	with open('data.yml', 'w') as outfile:
+		yaml.dump(yaml.load(json_type), outfile, allow_unicode=True)
+	# print yaml.dump(yaml.load(json_type), allow_unicode=True)
 
 if __name__ == "__main__":
 	main()
