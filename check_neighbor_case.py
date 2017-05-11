@@ -21,6 +21,8 @@ import os
 import pycurl, json
 import cStringIO
 import argparse
+import json
+import yaml
 from tabulate import tabulate
 from bs4 import BeautifulSoup
 
@@ -32,7 +34,7 @@ def cmdArgumentParser():
 	return parser.parse_args()
 
 def get_result(case_num):
-	pair=[]
+	info = {}
 	result=''
 	buf = cStringIO.StringIO()
 	url = 'https://egov.uscis.gov/casestatus/mycasestatus.do'
@@ -43,7 +45,6 @@ def get_result(case_num):
 	c.perform()
 
 	soup = BeautifulSoup(buf.getvalue(),"html.parser")
-	# mycase_status = soup.findAll("div", { "class" : "current-status-sec" })
 	mycase_txt = soup.findAll("div", { "class" : "rows text-center" })
 
 	for i in mycase_txt:
@@ -52,10 +53,18 @@ def get_result(case_num):
 	result = result.split('\n')
 	buf.close()
 
-	pair.append(case_num)
-	pair.append(result[1])
 
-	return pair
+	details = result[2].split(',')
+	recv_date = details[0][3:] + ' ' + details[1][1:]
+	case_type = details[2].split(' ')[-1]
+	info = {
+		"Type": case_type,
+		"Received": recv_date,
+		"Number": case_num,
+		"Status": result[1]
+	}
+
+	return info
 
 def main():
 	args = cmdArgumentParser()
@@ -72,10 +81,8 @@ def main():
 		# print case_n
 		final_result.append(get_result(case_n))
 
-	print tabulate(sorted(final_result,key=lambda x: x[0]),headers=['Case Number', 'Status'])
-
-	# print final_result
-	# print tabulate(sorted(final_result,key=lambda l:l[2]), headers=['Service', 'Version'])
+	json_type = json.dumps(final_result,indent=4)
+	print yaml.dump(yaml.load(json_type), allow_unicode=True)
 
 
 if __name__ == "__main__":
