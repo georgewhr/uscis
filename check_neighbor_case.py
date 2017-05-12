@@ -31,7 +31,7 @@ from multiprocessing import Value, Lock, Manager
 from tabulate import tabulate
 from bs4 import BeautifulSoup
 
-CPU_CORES = 16
+CPU_CORES = multiprocessing.cpu_count()
 
 def cmdArgumentParser():
 	parser = argparse.ArgumentParser()
@@ -63,8 +63,8 @@ def get_result(case_num,prefix,verbose):
 	buf.close()
 	try:
 		details = result[2].split(',')
-		recv_date = details[0][3:] + ' ' + details[1][1:]
-		case_type = details[2].split(' ')[-1]
+		recv_date = get_case_receive_date(details)
+		case_type = get_case_type(result[2])
 		info = {
 			"Type": case_type,
 			"Received": recv_date,
@@ -103,6 +103,31 @@ def query_website(ns,batch_result,prefix,lock,verbose):
 	ns.df = ns.df + local_result
 	lock.release()
 	time.sleep(1)
+
+def get_case_type(line):
+
+	iCase = re.search("\w*I-\w*", line)
+	crCase = re.search("\w*CR-\w*", line)
+	irCase = re.search("\w*IR-\w*", line)
+	
+	if iCase:
+		return iCase.group(0)
+	elif crCase:
+		return crCase.group(0)
+	elif irCase:
+		return irCase.group(0)
+	else:
+		return 'None Case'
+
+def get_case_receive_date(details):
+	year = str(details[1][1:])
+
+	if year.isdigit():
+		recv_date = details[0][3:] + ' ' + details[1][1:]
+	else:
+		recv_date = None
+
+	return recv_date
 
 def main():
 	final_result = []
