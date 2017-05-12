@@ -67,12 +67,11 @@ def get_result(case_num,prefix,verbose):
 		details = result[2].split(',')
 		recv_date = get_case_receive_date(details)
 		case_type = get_case_type(result[2])
-		info = {
-			"Type": case_type,
-			"Received": recv_date,
-			"Number": case_num,
-			"Status": result[1]
-		}
+		info[case_num] = {}
+		info[case_num]['Type'] = case_type
+		info[case_num]['Status'] = result[1]
+		info[case_num]['Received'] = recv_date
+
 		if verbose:
 			print info
 
