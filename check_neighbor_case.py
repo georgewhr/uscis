@@ -23,6 +23,7 @@ import cStringIO
 import argparse
 from tabulate import tabulate
 from bs4 import BeautifulSoup
+import certifi
 
 def cmdArgumentParser():
 	parser = argparse.ArgumentParser()
@@ -40,6 +41,7 @@ def get_result(case_num):
 	c.setopt(c.URL, url)
 	c.setopt(c.POSTFIELDS, 'appReceiptNum=%s'%case_num)
 	c.setopt(c.WRITEFUNCTION, buf.write)
+	c.setopt(c.CAINFO, certifi.where())
 	c.perform()
 
 	soup = BeautifulSoup(buf.getvalue(),"html.parser")
