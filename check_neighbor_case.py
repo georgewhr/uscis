@@ -23,6 +23,7 @@ import cStringIO
 import argparse
 import json
 import yaml
+import datetime
 import time
 import multiprocessing
 import io
@@ -38,7 +39,6 @@ def cmdArgumentParser():
 	parser.add_argument('-c', '--case_num', required=True, type=str, help='Case Number')
 	parser.add_argument('-v', '--verbose', action="store_true", help='Verbose mode will print out more information')
 	parser.add_argument("--dryrun", action="store_true", help='dryrun')
-	args = parser.parse_args()
 	return parser.parse_args()
 
 def get_result(case_num,prefix,verbose):
@@ -141,7 +141,8 @@ def main():
 			final_result.append(get_result(i,prefix,args.verbose))
 
 	json_type = json.dumps(final_result,indent=4)
-	with open('data.yml', 'w') as outfile:
+	now = datetime.datetime.now()
+	with open('data-%s.yml'%now.strftime("%Y-%m-%d"), 'w') as outfile:
 		yaml.dump(yaml.load(json_type), outfile, allow_unicode=True)
 	print yaml.dump(yaml.load(json_type), allow_unicode=True)
 
