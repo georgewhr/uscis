@@ -140,6 +140,8 @@ def main():
 	mgr = Manager()
 	ns = mgr.Namespace()
 	ns.df = final_result
+	cnt_approve = 0
+	cnt_rfe = 0
 
 	start = case_numberic - args.batch
 	end = case_numberic + args.batch
@@ -165,9 +167,20 @@ def main():
 		for i in range(start,end):
 			final_result.append(get_result(i,prefix,args.verbose))
 
+	for i in final_result:
+		if 'Evidence' in i['Status'] and 'I-129' == i['Type']:
+			cnt_rfe+=1
+		if 'Approve' in i['Status'] and 'I-129' == i['Type']:
+			cnt_approve+=1
+	total_cnts = len(final_result)
+	final_result = sorted(final_result, key=lambda k: k['Number']) 
+
+	result_cnt = 'Approved: %d, RFE: %d, Total: %d'%(cnt_approve,cnt_rfe,total_cnts)
+	final_result.append(result_cnt)
+
 	json_type = json.dumps(final_result,indent=4)
 	now = datetime.datetime.now()
-	with open('data-%s.yml'%now.strftime("%Y-%m-%d"), 'w') as outfile:
+	with open('data-%s.yml'%now.strftime("%Y-%m-%d-%H"), 'w') as outfile:
 		yaml.dump(yaml.load(json_type), outfile, allow_unicode=True)
 	print yaml.dump(yaml.load(json_type), allow_unicode=True)
 
