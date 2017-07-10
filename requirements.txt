@@ -3,3 +3,4 @@ pycurl
 tabulate
 bs4
 certifi
+pyyaml
