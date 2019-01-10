@@ -1,4 +1,3 @@
-
 # Copyright (c) 2017, George Haoran Wang georgewhr@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,8 +17,8 @@ import requests
 import re
 import sys
 import os
-import pycurl, json
-import cStringIO
+import pycurl
+import json
 import argparse
 import json
 import yaml
@@ -27,21 +26,26 @@ import time
 import datetime
 import multiprocessing
 import io
+import sys
 from multiprocessing import Value, Lock, Manager
 from tabulate import tabulate
 from bs4 import BeautifulSoup
+import pandas as pd
 
 
 def main():
-	now = datetime.datetime.now()
-	print now.strftime("%Y-%m-%d")
-	exit(0)
-	with open('data.yml', 'r') as f:
-		doc = yaml.load(f)
+    now = datetime.datetime.now()
 
-	for i in doc:
-		if 'Case Was Received' not in i['Status']:
-			print i
+    d = {}
+    with open('data-' + now.strftime("%Y-%m-%d") + '.yml', 'r') as f:
+        doc = yaml.load(f)
+
+        for i in doc:
+            d.update(i)
+
+    df = pd.DataFrame(d).T
+    print(df['Status'].value_counts())
+
 
 if __name__ == "__main__":
-	main()
+    main()
