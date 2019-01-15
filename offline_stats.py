@@ -31,20 +31,57 @@ from multiprocessing import Value, Lock, Manager
 from tabulate import tabulate
 from bs4 import BeautifulSoup
 import pandas as pd
+from sklearn.linear_model import LogisticRegression
+
+
+def cmdArgumentParser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--file_name', required=False, type=str, help='File Name')
+    parser.add_argument("--dryrun", action="store_true", help='dryrun')
+    return parser.parse_args()
+
+
+def get_dummy_status(status):
+    if status in [
+        'Card Was Mailed To Me', 'New Card Is Being Produced',
+        'Card Was Picked Up By The United States Postal Service',
+        'Card Was Delivered To Me By The Post Office'
+    ]:
+        return 1
+    elif status in [
+        'Case Was Received',
+        'Correspondence Was Received And USCIS Is Reviewing It',
+        'Fees Were Waived', 'Fingerprint Fee Was Received',
+        'Request for Initial Evidence Was Mailed', 'Name Was Updated',
+        'Date of Birth Was Updated',
+        'Notice Explaining USCIS Actions Was Mailed',
+        'Duplicate Notice Was Mailed', 'Case Is Pending at a Local Office'
+    ]:
+        return 0
+    else:
+        return None
 
 
 def main():
     now = datetime.datetime.now()
+    file = cmdArgumentParser().file_name or 'data-' + now.strftime("%Y-%m-%d")
 
     d = {}
-    with open('data-' + now.strftime("%Y-%m-%d") + '.yml', 'r') as f:
+    with open(file + '.yml', 'r') as f:
         doc = yaml.load(f)
 
         for i in doc:
             d.update(i)
 
     df = pd.DataFrame(d).T
-    print(df['Status'].value_counts())
+    df = df.loc[df['Type'] == 'I-765'].dropna().sort_index()
+    df['Status'] = df['Status'].apply(get_dummy_status)
+    df['Number'] = df.index.str.slice(start=3).astype(int)
+    df.to_csv(file + '.csv')
+
+    model = LogisticRegression()
+    _ = model.fit(df[['Number']], df['Status'] == 1)
+    print(model.predict_proba(1990044796)[0][1])
 
 
 if __name__ == "__main__":
