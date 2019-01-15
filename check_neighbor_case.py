@@ -37,6 +37,7 @@ CPU_CORES = multiprocessing.cpu_count()
 def cmdArgumentParser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--batch', required=True, type=int, help='Batch Number')
+    parser.add_argument('-s', '--step', required=False, type=int, help='Step')
     parser.add_argument('-c', '--case_num', required=True, type=str, help='Case Number')
     parser.add_argument('-v', '--verbose', action="store_true", help='Verbose mode will print out more information')
     parser.add_argument("--dryrun", action="store_true", help='dryrun')
@@ -82,25 +83,17 @@ def get_result(case_num, prefix, verbose):
     return info
 
 
-def get_batch_pair(total_num, case_s, case_e):
-    batch = {}
+def get_batches(case_nums):
     info = []
-    for i in range(int(total_num / CPU_CORES)):
-        s = CPU_CORES * i + case_s
-        e = s + CPU_CORES - 1
-        batch = {
-            "start": s,
-            "end": e
-        }
-        info.append(batch)
+
+    for i in range(int(len(case_nums) / CPU_CORES)):
+        info.append(case_nums[i * CPU_CORES:(i + 1) * CPU_CORES])
     return info
 
 
 def query_website(ns, batch_result, prefix, lock, verbose):
     local_result = []
-    if verbose:
-        print('s is %d, e is %d' % (int(batch_result['start']), int(batch_result['end'])))
-    for case_n in range(int(batch_result['start']), int(batch_result['end'])):
+    for case_n in batch_result:
         local_result.append(get_result(case_n, prefix, verbose))
 
     lock.acquire()
@@ -137,10 +130,10 @@ def get_case_receive_date(details):
 
 def main():
     final_result = []
-    reminder_result = []
     args = cmdArgumentParser()
     case_numberic = int(args.case_num[3:])
     prefix = args.case_num[:3]
+    step = args.step or 1
     lock = Lock()
     jobs = []
     mgr = Manager()
@@ -149,15 +142,17 @@ def main():
 
     start = case_numberic - args.batch
     end = case_numberic + args.batch
-
     total_num = end - start + 1
-    rmnder = total_num % CPU_CORES
 
     if total_num > 20:
-        batch_result = get_batch_pair(total_num, start, end)
+        case_nums = list(range(start, case_numberic - 10, step)) + list(
+            range(case_numberic - 10, case_numberic + 10)) + list(range(case_numberic + 10, end, step))
 
-        for i in range(len(batch_result)):
-            p = multiprocessing.Process(target=query_website, args=(ns, batch_result[i], prefix, lock, args.verbose,))
+        batch_result = get_batches(case_nums)
+
+        for b in batch_result:
+            p = multiprocessing.Process(target=query_website,
+                                        args=(ns, b, prefix, lock, args.verbose,))
             jobs.append(p)
             p.start()
         for job in jobs:
@@ -165,8 +160,6 @@ def main():
 
         final_result = ns.df
 
-    # for i in range(end - rmnder + 1,end):
-    # 	reminder_result.append(get_result(i,prefix))
     else:
         for i in range(start, end):
             final_result.append(get_result(i, prefix, args.verbose))

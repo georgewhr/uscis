@@ -37,6 +37,7 @@ from sklearn.linear_model import LogisticRegression
 def cmdArgumentParser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--file_name', required=False, type=str, help='File Name')
+    parser.add_argument('-c', '--case_num', required=True, type=str, help='Case Number')
     parser.add_argument("--dryrun", action="store_true", help='dryrun')
     return parser.parse_args()
 
@@ -64,8 +65,9 @@ def get_dummy_status(status):
 
 def main():
     now = datetime.datetime.now()
-    file = cmdArgumentParser().file_name or 'data-' + now.strftime("%Y-%m-%d")
-
+    args = cmdArgumentParser()
+    file = args.file_name or 'data-' + now.strftime("%Y-%m-%d")
+    case = int(args.case_num[3:])
     d = {}
     with open(file + '.yml', 'r') as f:
         doc = yaml.load(f)
@@ -73,15 +75,15 @@ def main():
         for i in doc:
             d.update(i)
 
-    df = pd.DataFrame(d).T
-    df = df.loc[df['Type'] == 'I-765'].dropna().sort_index()
+    df = pd.DataFrame(d).T.sort_index()
     df['Status'] = df['Status'].apply(get_dummy_status)
     df['Number'] = df.index.str.slice(start=3).astype(int)
+    df = df.loc[df['Type'] == 'I-765'].dropna()
     df.to_csv(file + '.csv')
 
     model = LogisticRegression()
     _ = model.fit(df[['Number']], df['Status'] == 1)
-    print(model.predict_proba(1990044796)[0][1])
+    print(model.predict_proba(case)[0][1])
 
 
 if __name__ == "__main__":
