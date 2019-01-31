@@ -78,7 +78,6 @@ def main():
     df = pd.DataFrame(d).T.sort_index()
     df['Status'] = df['Status'].apply(get_dummy_status)
     df['Number'] = df.index.str.slice(start=3).astype(int)
-    df = df.loc[df['Type'] == 'I-765'].dropna()
     df.to_csv(file + '.csv')
 
     model = LogisticRegression()
