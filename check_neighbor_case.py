@@ -19,7 +19,7 @@ import re
 import sys
 import os
 import pycurl, json
-import cStringIO
+import io
 import argparse
 import json
 import yaml
@@ -45,7 +45,7 @@ def cmdArgumentParser():
 def get_result(case_num,prefix,verbose):
 	info = {}
 	result=''
-	buf = cStringIO.StringIO()
+	buf = io.BytesIO()
 	url = 'https://egov.uscis.gov/casestatus/mycasestatus.do'
 	case_num = prefix + str(case_num)
 	c = pycurl.Curl()
@@ -73,17 +73,17 @@ def get_result(case_num,prefix,verbose):
 		info[case_num]['Received'] = recv_date
 
 		if verbose:
-			print info
+			print(info)
 
 	except Exception as e:
-		print 'USCIS format is incorrect'
+		print('USCIS format is incorrect')
 
 	return info
 
 def get_batch_pair(total_num,case_s,case_e):
 	batch = {}
 	info = []
-	for i in range(total_num / CPU_CORES):
+	for i in range(total_num // CPU_CORES):
 		s = CPU_CORES * i + case_s
 		e = s + CPU_CORES - 1
 		batch = {
@@ -96,7 +96,7 @@ def get_batch_pair(total_num,case_s,case_e):
 def query_website(ns,batch_result,prefix,lock,verbose):
 	local_result = []
 	if verbose:
-		print 's is %d, e is %d'%(int(batch_result['start']),int(batch_result['end']))
+		print('s is %d, e is %d'%(int(batch_result['start']),int(batch_result['end'])))
 	for case_n in range(int(batch_result['start']),int(batch_result['end'])):
 		local_result.append(get_result(case_n,prefix,verbose))
 
@@ -110,7 +110,7 @@ def get_case_type(line):
 	iCase = re.search("\w*I-\w*", line)
 	crCase = re.search("\w*CR-\w*", line)
 	irCase = re.search("\w*IR-\w*", line)
-	
+
 	if iCase:
 		return iCase.group(0)
 	elif crCase:
@@ -169,8 +169,8 @@ def main():
 	json_type = json.dumps(final_result,indent=4)
 	now = datetime.datetime.now()
 	with open('data-%s.yml'%now.strftime("%Y-%m-%d"), 'w') as outfile:
-		yaml.dump(yaml.load(json_type), outfile, allow_unicode=True)
-	print yaml.dump(yaml.load(json_type), allow_unicode=True)
+		yaml.dump(yaml.load(json_type, Loader=yaml.BaseLoader), outfile, allow_unicode=True)
+	print(yaml.dump(yaml.load(json_type, Loader=yaml.BaseLoader), allow_unicode=True))
 
 if __name__ == "__main__":
 	main()
